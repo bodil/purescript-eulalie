@@ -1,0 +1,29 @@
+{
+  "name": "purescript-eulalie",
+  "version": "1.0.0",
+  "moduleType": [
+    "node"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "output"
+  ],
+  "dependencies": {
+    "purescript-console": "^0.1.0",
+    "purescript-strings": "~0.7.1",
+    "purescript-maybe": "~0.3.5",
+    "purescript-generics": "~0.7.0",
+    "purescript-sets": "~0.5.5",
+    "purescript-control": "~0.3.2",
+    "purescript-tuples": "~0.4.0",
+    "purescript-monoid": "~0.3.2",
+    "purescript-foldable-traversable": "~0.4.2",
+    "purescript-integers": "~0.2.1",
+    "purescript-globals": "~0.2.2"
+  },
+  "devDependencies": {
+    "purescript-quickcheck": "~0.12.2"
+  }
+}
