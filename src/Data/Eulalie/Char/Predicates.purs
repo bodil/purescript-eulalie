@@ -26,3 +26,12 @@ isUpper c = isLetter c && c == Char.toUpper c
 
 isLower :: Char -> Boolean
 isLower c = isLetter c && c == Char.toLower c
+
+unless :: (Char -> Boolean) -> (Char -> Boolean) -> (Char -> Boolean)
+unless a b = \v -> not (b v) && a v
+
+and :: (Char -> Boolean) -> (Char -> Boolean) -> (Char -> Boolean)
+and a b = \v -> a v && b v
+
+or :: (Char -> Boolean) -> (Char -> Boolean) -> (Char -> Boolean)
+or a b = \v -> a v || b v
