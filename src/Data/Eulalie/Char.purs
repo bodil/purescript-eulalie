@@ -2,6 +2,7 @@ module Data.Eulalie.Char where
 
 import Prelude
 
+import Data.Foldable (any)
 import Data.String as String
 
 import Data.Eulalie.Char.Predicates as Pred
@@ -22,6 +23,10 @@ char c = expected (sat \i -> i == c) $ "\"" ++ String.fromChar c ++ "\""
 notChar :: Char -> Parser Char
 notChar c = expected (sat \i -> i /= c) $
             "anything but \"" ++ String.fromChar c ++ "\""
+
+oneOf :: String -> Parser Char
+oneOf s = expected (sat \i -> any (\c -> i == c) cs) $ "one of \"" ++ s ++ "\""
+  where cs = String.toCharArray s
 
 digit :: Parser Char
 digit = expected (sat Pred.isDigit) "a digit"

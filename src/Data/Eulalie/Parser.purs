@@ -50,6 +50,9 @@ cut parser = Parser \input -> case parse parser input of
   Result.Error r -> Result.Error $ Error.escalate r
   success -> success
 
+cutWith :: forall a b. Parser b -> Parser a -> Parser a
+cutWith p1 p2 = p1 *> cut p2
+
 seq :: forall a b. Parser a -> (a -> Parser b) -> Parser b
 seq parser callback =
   Parser \input -> case parse parser input of
@@ -97,6 +100,18 @@ many1 parser = do
   head <- parser
   tail <- many parser
   return (head : tail)
+
+sepBy :: forall a b. Parser a -> Parser b -> Parser (List b)
+sepBy sep p = do
+  head <- p
+  tail <- either (many $ sep *> p) $ pure Nil
+  return $ Cons head tail
+
+sepByCut :: forall a b. Parser a -> Parser b -> Parser (List b)
+sepByCut sep p = do
+  head <- p
+  tail <- either (many (cutWith sep p)) $ pure Nil
+  return $ Cons head tail
 
 instance functorParser :: Functor Parser where
   map = liftM1
