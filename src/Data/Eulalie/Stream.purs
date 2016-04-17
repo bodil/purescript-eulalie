@@ -2,7 +2,7 @@ module Data.Eulalie.Stream where
 
 import Prelude
 
-import Data.Generic (Generic, gShow)
+import Data.Generic (class Generic, gShow)
 import Data.Maybe (Maybe(..))
 import Data.String as String
 

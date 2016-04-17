@@ -2,13 +2,14 @@ module Data.Eulalie.Parser where
 
 import Prelude
 
-import Control.Alt (Alt, (<|>))
-import Control.Alternative (Alternative)
-import Control.MonadPlus (MonadPlus)
-import Control.Plus (Plus)
+import Control.Alt (class Alt, (<|>))
+import Control.Alternative (class Alternative)
+import Control.Apply ((*>))
+import Control.MonadPlus (class MonadPlus)
+import Control.Plus (class Plus)
 import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..))
-import Data.Monoid (Monoid, mempty)
+import Data.Monoid (class Monoid, mempty)
 import Data.Set as Set
 import Data.String as String
 import Data.Tuple (Tuple(..))

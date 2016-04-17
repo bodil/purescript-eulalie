@@ -7,7 +7,6 @@ import Control.Apply ((*>))
 import Data.Foldable (fold)
 import Data.Int as Int
 import Data.Maybe (Maybe(..))
-import Data.Monoid (Monoid)
 import Data.String as String
 import Global (readFloat, isNaN)
 
