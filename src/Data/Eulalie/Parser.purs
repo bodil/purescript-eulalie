@@ -81,8 +81,8 @@ sat predicate = do
   (Tuple v start) <- withStart item
   if predicate v then return v else failAt start
 
-maybe :: Parser String -> Parser String
-maybe parser = parser <|> return ""
+maybe :: forall a. (Monoid a) => Parser a -> Parser a
+maybe parser = parser <|> return mempty
 
 eof :: Parser Unit
 eof = expected eof' "end of file" where
