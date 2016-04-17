@@ -1,17 +1,20 @@
 {
   "name": "purescript-eulalie",
   "version": "1.0.0",
-  "moduleType": [
-    "node"
-  ],
+  "description": "Fast string parser combinators",
+  "author": "Bodil Stokke",
+  "license": "LGPL-3.0+",
   "ignore": [
     "**/.*",
     "node_modules",
     "bower_components",
     "output"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/bodil/purescript-eulalie.git"
+  },
   "dependencies": {
-    "purescript-console": "^0.1.0",
     "purescript-strings": "~0.7.1",
     "purescript-maybe": "~0.3.5",
     "purescript-generics": "~0.7.0",
@@ -24,6 +27,7 @@
     "purescript-globals": "~0.2.2"
   },
   "devDependencies": {
+    "purescript-test-unit": "~5.0.0",
     "purescript-quickcheck": "~0.12.2"
   }
 }
