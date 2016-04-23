@@ -162,7 +162,13 @@ many1 parser = do
 -- |parser `sep` to match once in between each match of `p`. In other words,
 -- |use `sep` to match separator characters in between matches of `p`.
 sepBy :: forall a b. Parser a -> Parser b -> Parser (List b)
-sepBy sep p = do
+sepBy sep p = sepBy sep p <|> return Nil
+
+-- |Matches the provided parser `p` one or more times, but requires the
+-- |parser `sep` to match once in between each match of `p`. In other words,
+-- |use `sep` to match separator characters in between matches of `p`.
+sepBy1 :: forall a b. Parser a -> Parser b -> Parser (List b)
+sepBy1 sep p = do
   head <- p
   tail <- either (many $ sep *> p) $ pure Nil
   return $ Cons head tail
