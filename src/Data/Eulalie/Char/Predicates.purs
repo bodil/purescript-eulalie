@@ -19,7 +19,7 @@ isAlphanum :: Char -> Boolean
 isAlphanum c = Re.test (Re.regex "^\\w$" Re.noFlags) (Str.fromChar c)
 
 isLetter :: Char -> Boolean
-isLetter c = Re.test (Re.regex "^\\[a-zA-Z]$" Re.noFlags) (Str.fromChar c)
+isLetter c = Re.test (Re.regex "^[a-zA-Z]$" Re.noFlags) (Str.fromChar c)
 
 isUpper :: Char -> Boolean
 isUpper c = isLetter c && c == Char.toUpper c
