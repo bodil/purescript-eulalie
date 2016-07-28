@@ -24,11 +24,11 @@ many1 :: Parser String -> Parser String
 many1 parser = do
   head <- parser
   tail <- many parser
-  return (head ++ tail)
+  pure (head <> tail)
 
 -- |Turns a parser of `Char` into a parser of `String`.
 fromChar :: Parser Char -> Parser String
-fromChar parser = String.fromChar <$> parser
+fromChar parser = String.singleton <$> parser
 
 -- |Matches the exact `Char` provided, returning it as a string.
 char :: Char -> Parser String
@@ -40,14 +40,14 @@ notChar = fromChar <<< Char.notChar
 
 -- |Matches the exact string provided.
 string :: String -> Parser String
-string s = expected (string' s) $ "\"" ++ s ++ "\""
+string s = expected (string' s) $ "\"" <> s <> "\""
   where string' :: String -> Parser String
         string' s = case String.charAt 0 s of
-          Nothing -> return ""
+          Nothing -> pure ""
           Just c -> do
             Char.char c
             string' $ String.drop 1 s
-            return s
+            pure s
 
 -- |Matches zero or more whitespace characters.
 spaces :: Parser String
@@ -72,7 +72,7 @@ int = expected int' "an integer"
   where int' = do
           r <- fold [ maybe (char '-'), Char.many1 Char.digit ]
           case Int.fromString r of
-            Just i -> return i
+            Just i -> pure i
             _ -> fail
 
 -- |Parses a positive or negative floating point number.
@@ -85,10 +85,10 @@ float = expected float' "a number"
                       ]
           case readFloat r of
             n | isNaN n -> fail
-            n -> return n
+            n -> pure n
 
 -- |Parses a double quoted string, with support for escaping double quotes
--- |insite it, and returns the inner string. Does not perform any other form
+-- |inside it, and returns the inner string. Does not perform any other form
 -- |of string escaping.
 quotedString :: Parser String
 quotedString = expected qs "a quoted string"
@@ -96,4 +96,4 @@ quotedString = expected qs "a quoted string"
           char '"'
           s <- many $ (char '\\' *> fromChar item) <|> notChar '"'
           char '"'
-          return s
+          pure s

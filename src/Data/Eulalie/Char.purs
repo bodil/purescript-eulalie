@@ -19,22 +19,22 @@ many1 :: Parser Char -> Parser String
 many1 parser = do
   head <- parser
   tail <- many parser
-  return (String.fromChar head ++ tail)
+  pure (String.singleton head <> tail)
 
 -- |The `char` parser constructor returns a parser which matches only the
 -- |specified single character.
 char :: Char -> Parser Char
-char c = expected (sat \i -> i == c) $ "\"" ++ String.fromChar c ++ "\""
+char c = expected (sat \i -> i == c) $ "\"" <> String.singleton c <> "\""
 
 -- |The `notChar` parser constructor makes a parser which will match any
 -- |single character other than the one provided.
 notChar :: Char -> Parser Char
 notChar c = expected (sat \i -> i /= c) $
-            "anything but \"" ++ String.fromChar c ++ "\""
+            "anything but \"" <> String.singleton c <> "\""
 
 -- |Matches any one character from the provided string.
 oneOf :: String -> Parser Char
-oneOf s = expected (sat \i -> any (\c -> i == c) cs) $ "one of \"" ++ s ++ "\""
+oneOf s = expected (sat \i -> any (\c -> i == c) cs) $ "one of \"" <> s <> "\""
   where cs = String.toCharArray s
 
 -- |Matches a single digit.

@@ -1,24 +1,23 @@
 module Data.Eulalie.Parser where
 
 import Prelude
-
+import Data.Eulalie.Error as Error
+import Data.Eulalie.Result as Result
+import Data.Eulalie.Stream as Stream
+import Data.Set as Set
+import Data.String as String
 import Control.Alt (class Alt, (<|>))
 import Control.Alternative (class Alternative)
 import Control.Apply ((*>))
 import Control.MonadPlus (class MonadPlus)
+import Control.MonadZero (class MonadZero)
 import Control.Plus (class Plus)
+import Data.Eulalie.Result (ParseResult)
+import Data.Eulalie.Stream (Stream)
 import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..))
 import Data.Monoid (class Monoid, mempty)
-import Data.Set as Set
-import Data.String as String
 import Data.Tuple (Tuple(..))
-
-import Data.Eulalie.Error as Error
-import Data.Eulalie.Result as Result
-import Data.Eulalie.Result (ParseResult())
-import Data.Eulalie.Stream as Stream
-import Data.Eulalie.Stream (Stream())
 
 newtype Parser a = Parser (Stream -> ParseResult a)
 
@@ -29,7 +28,7 @@ parse (Parser parser) input = parser input
 -- |The `succeed` parser constructor creates a parser which will simply
 -- |return the value provided as its argument, without consuming any input.
 -- |
--- |This is equivalent to the monadic `return`.
+-- |This is equivalent to the monadic `pure`.
 succeed :: forall a. a -> Parser a
 succeed value = Parser \input -> Result.success value input input ""
 
@@ -55,7 +54,7 @@ expected parser msg = Parser \input -> case parse parser input of
 item :: Parser Char
 item = Parser \input -> case Stream.getAndNext input of
   Just { value, next } ->
-    Result.success value next input (String.fromChar value)
+    Result.success value next input (String.singleton value)
   Nothing -> Result.error input
 
 -- |The `cut` parser combinator takes a parser and produces a new parser for
@@ -84,7 +83,7 @@ seq parser callback =
   Parser \input -> case parse parser input of
     Result.Success r -> case parse (callback r.value) r.next of
       Result.Success next -> Result.success next.value next.next input
-                           (r.matched ++ next.matched)
+                           (r.matched <> next.matched)
       next -> next
     Result.Error err -> Result.Error err
 
@@ -122,13 +121,13 @@ withStart parser = Parser \input -> case parse parser input of
 sat :: (Char -> Boolean) -> Parser Char
 sat predicate = do
   (Tuple v start) <- withStart item
-  if predicate v then return v else failAt start
+  if predicate v then pure v else failAt start
 
 -- |The `maybe` parser combinator creates a parser which will run the provided
 -- |parser on the input, and if it fails, it will returns the empty value (as
 -- |defined by `mempty`) as a result, without consuming any input.
 maybe :: forall a. (Monoid a) => Parser a -> Parser a
-maybe parser = parser <|> return mempty
+maybe parser = parser <|> pure mempty
 
 -- |Matches the end of the stream.
 eof :: Parser Unit
@@ -147,7 +146,7 @@ eof = expected eof' "end of file" where
 -- |Read that as "match this parser zero or more times and give me a list of
 -- |the results."
 many :: forall a. Parser a -> Parser (List a)
-many parser = many1 parser <|> return Nil
+many parser = many1 parser <|> pure Nil
 
 -- |The `many1` combinator is just like the `many` combinator, except it
 -- |requires its wrapped parser to match at least once. The resulting list is
@@ -156,13 +155,13 @@ many1 :: forall a. Parser a -> Parser (List a)
 many1 parser = do
   head <- parser
   tail <- many parser
-  return (head : tail)
+  pure (head : tail)
 
 -- |Matches the provided parser `p` zero or more times, but requires the
 -- |parser `sep` to match once in between each match of `p`. In other words,
 -- |use `sep` to match separator characters in between matches of `p`.
 sepBy :: forall a b. Parser a -> Parser b -> Parser (List b)
-sepBy sep p = sepBy1 sep p <|> return Nil
+sepBy sep p = sepBy1 sep p <|> pure Nil
 
 -- |Matches the provided parser `p` one or more times, but requires the
 -- |parser `sep` to match once in between each match of `p`. In other words,
@@ -171,7 +170,7 @@ sepBy1 :: forall a b. Parser a -> Parser b -> Parser (List b)
 sepBy1 sep p = do
   head <- p
   tail <- either (many $ sep *> p) $ pure Nil
-  return $ Cons head tail
+  pure $ Cons head tail
 
 -- |Like `sepBy`, but cut on the separator, so that matching a `sep` not
 -- |followed by a `p` will cause a fatal error.
@@ -179,7 +178,7 @@ sepByCut :: forall a b. Parser a -> Parser b -> Parser (List b)
 sepByCut sep p = do
   head <- p
   tail <- either (many (cutWith sep p)) $ pure Nil
-  return $ Cons head tail
+  pure $ Cons head tail
 
 instance functorParser :: Functor Parser where
   map = liftM1
@@ -203,10 +202,12 @@ instance plusParser :: Plus Parser where
 
 instance alternativeParser :: Alternative Parser
 
+instance monadZeroParser :: MonadZero Parser
+
 instance monadPlusParser :: MonadPlus Parser
 
 instance semigroupParser :: (Monoid a) => Semigroup (Parser a) where
   append a b = append <$> a <*> b
 
 instance monoidParser :: (Monoid a) => Monoid (Parser a) where
-  mempty = return mempty
+  mempty = pure mempty

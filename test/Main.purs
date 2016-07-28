@@ -19,8 +19,8 @@ itemTest input =
         i1 = String.charAt 1 input
     in case r of
       R.Success s -> Tuple s.value (Tuple s.matched $ Stream.get s.next)
-        === Tuple i0 (Tuple (String.fromChar i0) i1)
-      _ -> Failed $ "parse failed: \"" ++ input ++ "\""
+        === Tuple i0 (Tuple (String.singleton i0) i1)
+      _ -> Failed $ "parse failed: \"" <> input <> "\""
 
 main :: forall e. QC e Unit
 main = do

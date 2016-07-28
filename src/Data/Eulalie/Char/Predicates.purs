@@ -1,25 +1,38 @@
 module Data.Eulalie.Char.Predicates where
 
 import Prelude
-
 import Data.Char as Char
 import Data.String as Str
 import Data.String.Regex as Re
+import Data.Either (fromRight)
+import Partial.Unsafe (unsafePartial)
 
 notP :: forall a. (a -> Boolean) -> (a -> Boolean)
 notP f = \v -> not (f v)
 
+digitRe :: Re.Regex
+digitRe = unsafePartial $ fromRight $ Re.regex "^\\d$" Re.noFlags
+
+spaceRe :: Re.Regex
+spaceRe = unsafePartial $ fromRight $ Re.regex "^\\s$" Re.noFlags
+
+alphanumRe :: Re.Regex
+alphanumRe = unsafePartial $ fromRight $ Re.regex "^\\w$" Re.noFlags
+
+letterRe :: Re.Regex
+letterRe = unsafePartial $ fromRight $ Re.regex "^\\w$" Re.noFlags
+
 isDigit :: Char -> Boolean
-isDigit c = Re.test (Re.regex "^\\d$" Re.noFlags) (Str.fromChar c)
+isDigit c = Re.test digitRe (Str.singleton c)
 
 isSpace :: Char -> Boolean
-isSpace c = Re.test (Re.regex "^\\s$" Re.noFlags) (Str.fromChar c)
+isSpace c = Re.test spaceRe (Str.singleton c)
 
 isAlphanum :: Char -> Boolean
-isAlphanum c = Re.test (Re.regex "^\\w$" Re.noFlags) (Str.fromChar c)
+isAlphanum c = Re.test alphanumRe (Str.singleton c)
 
 isLetter :: Char -> Boolean
-isLetter c = Re.test (Re.regex "^[a-zA-Z]$" Re.noFlags) (Str.fromChar c)
+isLetter c = Re.test letterRe (Str.singleton c)
 
 isUpper :: Char -> Boolean
 isUpper c = isLetter c && c == Char.toUpper c

@@ -1,7 +1,5 @@
 module Data.Eulalie.Result where
 
-import Prelude
-
 import Data.Set as Set
 import Data.Set (Set())
 

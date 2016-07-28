@@ -1,13 +1,11 @@
 module Data.Eulalie.Error where
 
 import Prelude
-
-import Data.List as List
-import Data.Set (Set())
 import Data.Set as Set
 import Data.String as String
-
 import Data.Eulalie.Stream (Stream(..), atEnd)
+import Data.Array (fromFoldable)
+import Data.Set (Set)
 
 type ParseError = { input :: Stream, expected :: Set String,
                     fatal :: Boolean }
@@ -27,7 +25,7 @@ extend e1@{ expected: x1, input: Stream s1 }
 
 print :: ParseError -> String
 print { input: input@Stream { buffer, cursor }, expected } =
-  "Expected " ++ exp expected ++ ", saw "
-  ++ (if atEnd input then "EOF" else quote $ String.take 6 $ String.drop cursor buffer) ++ "\n\"" ++ buffer ++ "\""
-  where quote s = "\"" ++ s ++ "\""
-        exp xs = String.joinWith " or " $ List.fromList $ Set.toList xs
+  "Expected " <> exp expected <> ", saw "
+  <> (if atEnd input then "EOF" else quote $ String.take 6 $ String.drop cursor buffer) <> "\n\"" <> buffer <> "\""
+  where quote s = "\"" <> s <> "\""
+        exp xs = String.joinWith " or " $ fromFoldable xs
