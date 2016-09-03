@@ -23,11 +23,11 @@
     "purescript-tuples": "~1.0.0",
     "purescript-monoid": "~1.0.0",
     "purescript-foldable-traversable": "~1.0.0",
-    "purescript-integers": "~1.0.0",
+    "purescript-integers": "~1.1.0",
     "purescript-globals": "~1.1.0"
   },
   "devDependencies": {
-    "purescript-test-unit": "~7.0.1",
+    "purescript-test-unit": "~9.0.0",
     "purescript-quickcheck": "~1.0.0"
   }
 }
