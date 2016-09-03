@@ -5,7 +5,6 @@ import Data.Eulalie.Error as Error
 import Data.Eulalie.Result as Result
 import Data.Eulalie.Stream as Stream
 import Data.Set as Set
-import Data.String as String
 import Control.Alt (class Alt, (<|>))
 import Control.Alternative (class Alternative)
 import Control.Apply ((*>))
@@ -19,48 +18,48 @@ import Data.Maybe (Maybe(..))
 import Data.Monoid (class Monoid, mempty)
 import Data.Tuple (Tuple(..))
 
-newtype Parser a = Parser (Stream -> ParseResult a)
+newtype Parser i o = Parser (Stream i -> ParseResult i o)
 
 -- |Run a parse operation on a stream.
-parse :: forall a. Parser a -> Stream -> ParseResult a
+parse :: forall i o. Parser i o -> Stream i -> ParseResult i o
 parse (Parser parser) input = parser input
 
 -- |The `succeed` parser constructor creates a parser which will simply
 -- |return the value provided as its argument, without consuming any input.
 -- |
 -- |This is equivalent to the monadic `pure`.
-succeed :: forall a. a -> Parser a
-succeed value = Parser \input -> Result.success value input input ""
+succeed :: forall i o. o -> Parser i o
+succeed value = Parser \input -> Result.success value input input mempty
 
 -- |The `fail` parser will just fail immediately without consuming any input.
-fail :: forall a. Parser a
+fail :: forall i o. Parser i o
 fail = Parser \input -> Result.error input
 
 -- |The `failAt` parser will fail immediately without consuming any input,
 -- |but will report the failure at the provided input position.
-failAt :: forall a. Stream -> Parser a
+failAt :: forall i o. Stream i -> Parser i o
 failAt input = Parser \_ -> Result.error input
 
 -- |A parser combinator which returns the provided parser unchanged, except
 -- |that if it fails, the provided error message will be returned in the
 -- |`ParseError`.
-expected :: forall a. Parser a -> String -> Parser a
+expected :: forall i o. Parser i o -> String -> Parser i o
 expected parser msg = Parser \input -> case parse parser input of
   Result.Error e -> Result.Error $ Error.withExpected e (Set.singleton msg)
   r -> r
 
--- |The `item` parser consumes a single character, regardless of what it is,
+-- |The `item` parser consumes a single value, regardless of what it is,
 -- |and returns it as its result.
-item :: Parser Char
+item :: forall i. Parser i i
 item = Parser \input -> case Stream.getAndNext input of
   Just { value, next } ->
-    Result.success value next input (String.singleton value)
+    Result.success value next input (pure value)
   Nothing -> Result.error input
 
 -- |The `cut` parser combinator takes a parser and produces a new parser for
 -- |which all errors are fatal, causing `either` to stop trying further
 -- |parsers and return immediately with a fatal error.
-cut :: forall a. Parser a -> Parser a
+cut :: forall i o. Parser i o -> Parser i o
 cut parser = Parser \input -> case parse parser input of
   Result.Error r -> Result.Error $ Error.escalate r
   success -> success
@@ -68,7 +67,7 @@ cut parser = Parser \input -> case parse parser input of
 -- |Takes two parsers `p1` and `p2`, returning a parser which will match
 -- |`p1` first, discard the result, then either match `p2` or produce a fatal
 -- |error.
-cutWith :: forall a b. Parser b -> Parser a -> Parser a
+cutWith :: forall i a b. Parser i b -> Parser i a -> Parser i a
 cutWith p1 p2 = p1 *> cut p2
 
 -- |The `seq` combinator takes a parser, and a function which will receive
@@ -78,7 +77,7 @@ cutWith p1 p2 = p1 *> cut p2
 -- |parsers.
 -- |
 -- |This is equivalent to the monadic `bind` operation.
-seq :: forall a b. Parser a -> (a -> Parser b) -> Parser b
+seq :: forall i a b. Parser i a -> (a -> Parser i b) -> Parser i b
 seq parser callback =
   Parser \input -> case parse parser input of
     Result.Success r -> case parse (callback r.value) r.next of
@@ -95,7 +94,7 @@ seq parser callback =
 -- |the second parser will not be attempted.
 -- |
 -- |This is equivalent to the `alt` operation of `MonadPlus`/`Alt`.
-either :: forall a. Parser a -> Parser a -> Parser a
+either :: forall i o. Parser i o -> Parser i o -> Parser i o
 either p1 p2 =
   Parser \input -> case parse p1 input of
     r@Result.Success _ -> r
@@ -109,7 +108,7 @@ either p1 p2 =
 -- |
 -- |Useful if you want to keep track of where in the input stream a parsed
 -- |token came from.
-withStart :: forall a. Parser a -> Parser (Tuple a Stream)
+withStart :: forall i o. Parser i o -> Parser i (Tuple o (Stream i))
 withStart parser = Parser \input -> case parse parser input of
   Result.Success r -> Result.Success $ r { value = Tuple r.value input }
   Result.Error err -> Result.Error err
@@ -118,7 +117,7 @@ withStart parser = Parser \input -> case parse parser input of
 -- |a single character if calling that predicate function with the character
 -- |as its argument returns `true`. If it returns `false`, the parser will
 -- |fail.
-sat :: (Char -> Boolean) -> Parser Char
+sat :: forall i. (i -> Boolean) -> Parser i i
 sat predicate = do
   (Tuple v start) <- withStart item
   if predicate v then pure v else failAt start
@@ -126,16 +125,16 @@ sat predicate = do
 -- |The `maybe` parser combinator creates a parser which will run the provided
 -- |parser on the input, and if it fails, it will returns the empty value (as
 -- |defined by `mempty`) as a result, without consuming any input.
-maybe :: forall a. (Monoid a) => Parser a -> Parser a
+maybe :: forall i o. (Monoid o) => Parser i o -> Parser  i o
 maybe parser = parser <|> pure mempty
 
 -- |Matches the end of the stream.
-eof :: Parser Unit
+eof :: forall i. Parser i Unit
 eof = expected eof' "end of file" where
-  eof' :: Parser Unit
+  eof' :: Parser i Unit
   eof' = Parser \input ->
     if Stream.atEnd input
-      then Result.success unit input input ""
+      then Result.success unit input input mempty
       else Result.error input
 
 -- |The `many` combinator takes a parser, and returns a new parser which will
@@ -145,13 +144,13 @@ eof = expected eof' "end of file" where
 -- |
 -- |Read that as "match this parser zero or more times and give me a list of
 -- |the results."
-many :: forall a. Parser a -> Parser (List a)
+many :: forall i o. Parser i o -> Parser i (List o)
 many parser = many1 parser <|> pure Nil
 
 -- |The `many1` combinator is just like the `many` combinator, except it
 -- |requires its wrapped parser to match at least once. The resulting list is
 -- |thus guaranteed to contain at least one value.
-many1 :: forall a. Parser a -> Parser (List a)
+many1 :: forall i o. Parser i o -> Parser i (List o)
 many1 parser = do
   head <- parser
   tail <- many parser
@@ -160,13 +159,13 @@ many1 parser = do
 -- |Matches the provided parser `p` zero or more times, but requires the
 -- |parser `sep` to match once in between each match of `p`. In other words,
 -- |use `sep` to match separator characters in between matches of `p`.
-sepBy :: forall a b. Parser a -> Parser b -> Parser (List b)
+sepBy :: forall i a b. Parser i a -> Parser i b -> Parser i (List b)
 sepBy sep p = sepBy1 sep p <|> pure Nil
 
 -- |Matches the provided parser `p` one or more times, but requires the
 -- |parser `sep` to match once in between each match of `p`. In other words,
 -- |use `sep` to match separator characters in between matches of `p`.
-sepBy1 :: forall a b. Parser a -> Parser b -> Parser (List b)
+sepBy1 :: forall i a b. Parser i a -> Parser i b -> Parser i (List b)
 sepBy1 sep p = do
   head <- p
   tail <- either (many $ sep *> p) $ pure Nil
@@ -174,40 +173,40 @@ sepBy1 sep p = do
 
 -- |Like `sepBy`, but cut on the separator, so that matching a `sep` not
 -- |followed by a `p` will cause a fatal error.
-sepByCut :: forall a b. Parser a -> Parser b -> Parser (List b)
+sepByCut :: forall i a b. Parser i a -> Parser i b -> Parser i (List b)
 sepByCut sep p = do
   head <- p
   tail <- either (many (cutWith sep p)) $ pure Nil
   pure $ Cons head tail
 
-instance functorParser :: Functor Parser where
+instance functorParser :: Functor (Parser i) where
   map = liftM1
 
-instance applyParser :: Apply Parser where
+instance applyParser :: Apply (Parser i) where
   apply = ap
 
-instance applicativeParser :: Applicative Parser where
+instance applicativeParser :: Applicative (Parser i) where
   pure = succeed
 
-instance bindParser :: Bind Parser where
+instance bindParser :: Bind (Parser i) where
   bind = seq
 
-instance monadParser :: Monad Parser
+instance monadParser :: Monad (Parser i)
 
-instance altParser :: Alt Parser where
+instance altParser :: Alt (Parser i) where
   alt = either
 
-instance plusParser :: Plus Parser where
+instance plusParser :: Plus (Parser i) where
   empty = fail
 
-instance alternativeParser :: Alternative Parser
+instance alternativeParser :: Alternative (Parser i)
 
-instance monadZeroParser :: MonadZero Parser
+instance monadZeroParser :: MonadZero (Parser i)
 
-instance monadPlusParser :: MonadPlus Parser
+instance monadPlusParser :: MonadPlus (Parser i)
 
-instance semigroupParser :: (Monoid a) => Semigroup (Parser a) where
+instance semigroupParser :: (Monoid o) => Semigroup (Parser i o) where
   append a b = append <$> a <*> b
 
-instance monoidParser :: (Monoid a) => Monoid (Parser a) where
+instance monoidParser :: (Monoid o) => Monoid (Parser i o) where
   mempty = pure mempty

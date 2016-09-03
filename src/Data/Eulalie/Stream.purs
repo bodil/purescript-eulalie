@@ -1,36 +1,32 @@
 module Data.Eulalie.Stream where
 
 import Prelude
-
-import Data.Generic (class Generic, gShow)
+import Data.Array (length, (!!))
 import Data.Maybe (Maybe(..))
-import Data.String as String
 
-newtype Stream = Stream { buffer :: String, cursor :: Int }
+newtype Stream a = Stream { buffer :: Array a, cursor :: Int }
 
-derive instance genericStream :: Generic Stream
-
-stream :: String -> Stream
+stream :: forall a. Array a -> Stream a
 stream s = Stream { buffer: s, cursor: 0 }
 
-get :: Stream -> Maybe Char
-get (Stream {buffer, cursor}) = String.charAt cursor buffer
+get :: forall a. Stream a -> Maybe a
+get (Stream {buffer, cursor}) = buffer !! cursor
 
-atEnd :: Stream -> Boolean
-atEnd (Stream {buffer, cursor}) = cursor >= String.length buffer
+atEnd :: forall a. Stream a -> Boolean
+atEnd (Stream {buffer, cursor}) = cursor >= length buffer
 
-next :: Stream -> Maybe Stream
+next :: forall a. Stream a -> Maybe (Stream a)
 next s@(Stream {buffer, cursor}) =
   if atEnd s then Just $ Stream { buffer, cursor: (cursor + 1) } else Nothing
 
-getAndNext :: Stream -> Maybe { value :: Char, next :: Stream }
-getAndNext (Stream {buffer, cursor}) = case String.charAt cursor buffer of
+getAndNext :: forall a. Stream a -> Maybe { value :: a, next :: Stream a }
+getAndNext (Stream {buffer, cursor}) = case buffer !! cursor of
   Just c -> Just $ { value: c, next: Stream { buffer, cursor: cursor + 1 } }
   Nothing -> Nothing
 
-instance eqStream :: Eq Stream where
+instance eqStream :: (Eq a) => Eq (Stream a) where
   eq (Stream {buffer: b1, cursor: c1}) (Stream {buffer: b2, cursor: c2}) =
     b1 == b2 && c1 == c2
 
-instance showStream :: Show Stream where
-  show = gShow
+instance showStream :: (Show a) => Show (Stream a) where
+  show (Stream {buffer, cursor}) = "Stream " <> show cursor <> " " <> show buffer

@@ -1,8 +1,10 @@
 module Data.Eulalie.Success where
 
-import Prelude
+import Data.Eulalie.Stream (Stream)
 
-import Data.Eulalie.Stream (Stream())
-
-type ParseSuccess a = { value :: a, next :: Stream, start :: Stream,
-                        matched :: String }
+type ParseSuccess i o =
+  { value :: o
+  , next :: Stream i
+  , start :: Stream i
+  , matched :: Array i
+  }

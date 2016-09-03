@@ -17,25 +17,25 @@ A parser is a function which takes an input `Stream`, and returns a
 The type of parsers is defined like this:
 
 ```purescript
-newtype Parser a = Parser (Stream -> ParseResult a)
+newtype Parser i o = Parser (Stream i -> ParseResult i o)
 ```
 
 ### Data Types
 
 ```purescript
-newtype Stream = Stream { buffer :: String, cursor :: Int }
+newtype Stream i = Stream i { buffer :: Array i, cursor :: Int }
 ```
 
-A `Stream` just contains a string, and an index into this string. We
-use this structure instead of passing strings around as input because
-string operations are expensive, while any operation on the `Stream`
-can be performed in linear time, and while many `Stream`s will be
-created during a parse operation, we only ever keep a single copy of
-the string they wrap.
+A `Stream` just contains an array of input data, and an index into
+this array. We use this structure instead of passing arrays around as
+input because array operations are expensive, while any operation on
+the `Stream` can be performed in linear time, and while many `Stream`s
+will be created during a parse operation, we only ever keep a single
+copy of the array they wrap.
 
 ```purescript
-data ParseResult a = Success (ParseSuccess a)
-                   | Error ParseError
+data ParseResult i o = Success (ParseSuccess i o)
+                     | Error (ParseError i)
 ```
 
 A `ParseResult` is what's returned from a parser, and signals whether
@@ -43,59 +43,69 @@ it succeeded or failed. It wraps one of two result values,
 `ParseSuccess` and `ParseError`.
 
 ```purescript
-type ParseSuccess a = { value :: a,
-                        next :: Stream,
-                        start :: Stream,
-                        matched :: String }
+type ParseSuccess i o =
+  { value :: o
+  , next :: Stream i
+  , start :: Stream i
+  , matched :: Array i
+  }
 ```
 
 A `ParseSuccess` contains four properties: the `value` we parsed (an
 arbitrary value), the `next` input to be parsed (a `Stream`), the
 point in the stream where we `start`ed parsing (also a `Stream`), and
-the substring that was `matched` by this parser (a string).
+the sub-array that was `matched` by this parser.
 
 ```purescript
-type ParseError = { input :: Stream,
-                    expected :: Set String,
-                    fatal :: Boolean }
+type ParseError i =
+  { input :: Stream i
+  , expected :: Set String
+  , fatal :: Boolean
+  }
 ```
 
 Finally, a `ParseError` simply contains an `input` property (a
 `Stream`) which points to the exact position where the parsing failed,
-and an optional `message` (a string). It also contains a `fatal` flag,
-which signifies to the `either` combinator that we should stop parsing
-immediately instead of trying further parsers.
+and a set of string descriptions of expected inputs. It also contains
+a `fatal` flag, which signifies to the `either` combinator that we
+should stop parsing immediately instead of trying further parsers.
 
 ### Parser Combinators
 
 The most basic parsers form the building blocks from which you can
 assemble more complex parsers:
 
-  * `succeed :: forall a. a -> Parser a` makes a parser which doesn't
-    consume input, just returns the provided value wrapped in a
-    `ParseSuccess`.
-  * `fail :: forall a. Parser a` is a parser which consumes no input
-    and returns a `ParseError`.
-  * `item :: Parser Char` is a parser which consumes one arbitrary
-    character and returns it as a `ParseSuccess`.
+  * `succeed :: forall i o. o -> Parser i o` makes a parser which
+    doesn't consume input, just returns the provided value wrapped in
+    a `ParseSuccess`.
+  * `fail :: forall i o. Parser i o` is a parser which consumes no
+    input and returns a `ParseError`.
+  * `item :: forall i. Parser i i` is a parser which consumes one
+    arbitrary input value and returns it as a `ParseSuccess`.
 
 The two fundamental parser combinators are:
 
-  * `seq :: forall a b. Parser a -> (a -> Parser b) -> Parser b` is
-    used to combine multiple parsers in a sequence. It takes a parser,
-    and a function which will be called with the result of the parser
-    if it succeeded, and must return another parser, which will be run
-    on the remaining input. The result of the combined parser will be
-    the result of this last parser, or the first error encountered.
+  * `seq :: forall i a b. Parser i a -> (a -> Parser i b) -> Parser i
+    b` is used to combine multiple parsers in a sequence. It takes a
+    parser, and a function which will be called with the result of the
+    parser if it succeeded, and must return another parser, which will
+    be run on the remaining input. The result of the combined parser
+    will be the result of this last parser, or the first error
+    encountered.
 
     (This corresponds to the
     [`bind`/`>>=`](https://pursuit.purescript.org/packages/purescript-prelude/0.1.4/docs/Prelude#v:bind)
     method on the `Monad` type class.)
 
-  * `either(parser1, parser2)` makes a parser which will first try the
-    first provided parser, and returns its result if it succeeds. If
-    it fails, it will run the second parser on the same input, and
-    return its result directly, whether or not it succeeded.
+  * `either :: forall i o. Parser i o -> Parser i o -> Parser i o`
+    makes a parser which will first try the first provided parser, and
+    returns its result if it succeeds. If it fails, it will run the
+    second parser on the same input, and return its result directly,
+    whether or not it succeeded.
+
+    If you've heard the term "backtracking" in relation to parsers,
+    this is handled automatically by the `either` function, and you
+    don't need to worry about it.
 
     (This corresponds to the
     [`alt`/`<|>`](https://pursuit.purescript.org/packages/purescript-control/0.3.2/docs/Control.Alt#v:alt)
@@ -103,18 +113,18 @@ The two fundamental parser combinators are:
 
 Using these, you can construct more advanced parser combinators. Some particularly useful combinators are predefined:
 
-  * `sat :: (Char -> Boolean) -> Parser Char` makes a parser which
-    will match one character only if the provided predicate function
-    returns `true` for it.
-  * `char :: Char -> Parser Char` makes a parser which matches a
+  * `sat :: forall i. (i -> Boolean) -> Parser i i` makes a parser
+    which will match one input value only if the provided predicate
+    function returns `true` for it.
+  * `many :: forall i o. Parser i o -> Parser i (List o)` makes a
+    parser which will match the provided parser zero or more times.
+  * `many1 :: forall i o. Parser i o -> Parser i (List o)` works just
+    like `many`, but requires at minimum one match.
+  * `char :: Char -> Parser Char Char` makes a parser which matches a
     specific single character.
-  * `many :: forall a. Parser a -> Parser (List a)` makes a parser
-    which will match the provided parser zero or more times.
-  * `many1 :: forall a. Parser a -> Parser (List a)` works just like
-    `many`, but requires at minimum one match.
-  * `string :: String -> Parser String` makes a parser which matches
-    the provided string exactly (which is done by using the `char`
-    parser for each `Char` in the string).
+  * `string :: String -> Parser Char String` makes a parser which
+    matches the provided string exactly (which is done by using the
+    `char` parser for each `Char` in the string).
 
 Other predefined parsers are `digit`, `space`, `alphanum`, `letter`,
 `upper` and `lower`, which match one character of their respective
@@ -175,12 +185,12 @@ myParser = S.string "lol" <|> S.string "rofl" <|> S.string "lmao"
 
 ### Monoids
 
-For a `Parser a` where `a` is a monoid, there's a type class
-implementation for `(Monoid a) => Monoid (Parser a)`, so that you can
-treat parsers for monoids like they're monoids too.
+For a `Parser i o` where `o` is a monoid, there's a type class
+implementation for `(Monoid o) => Monoid (Parser i o)`, so that you
+can treat parsers for monoids like they're monoids too.
 
 What this means, practically, is that because strings are monoids, you
-can do things like this for parsers of type `Parser String`,
+can do things like this for parsers of type `Parser Char String`,
 concatenating the results of each parser into a final result:
 
 ```purescript
@@ -207,12 +217,13 @@ import Data.Eulalie.Parser as P
 import Data.Eulalie.String as S
 import Data.Eulalie.Char as C
 import Data.Eulalie.Stream (stream)
+import Data.String (toCharArray)
 
 type HTTPRequest = { method :: String,
                      path :: String,
                      version :: String }
 
-parser :: Parser HTTPRequest
+parser :: Parser Char HTTPRequest
 parser = do
   -- Parse a sequence of 1 or more upper case letters
   method <- C.many1 C.upper
@@ -229,7 +240,7 @@ parser = do
   -- Return the final parsed value
   return { method, path, version }
 
-result = P.parse parser (stream "GET /lol.gif HTTP/1.0")
+result = P.parse parser (stream $ toCharArray "GET /lol.gif HTTP/1.0")
 -- { method:  "GET",
 --   path:    "/lol.gif",
 --   version: "1.0" }
