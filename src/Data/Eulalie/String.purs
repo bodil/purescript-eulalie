@@ -1,17 +1,15 @@
 module Data.Eulalie.String where
 
 import Prelude
-
+import Data.Eulalie.Char as Char
+import Data.Int as Int
+import Data.String as String
 import Control.Alt ((<|>))
 import Control.Apply ((*>))
-import Data.Foldable (fold)
-import Data.Int as Int
+import Data.Eulalie.Parser (Parser, expected, maybe, fail, item)
+import Data.Foldable (class Foldable, fold, foldl)
 import Data.Maybe (Maybe(..))
-import Data.String as String
 import Global (readFloat, isNaN)
-
-import Data.Eulalie.Char as Char
-import Data.Eulalie.Parser (Parser(), expected, maybe, fail, item)
 
 -- |Matches the given parser zero or more times, returning a string of the
 -- |entire match.
@@ -48,6 +46,10 @@ string s = expected (string' s) $ "\"" <> s <> "\""
             Char.char c
             string' $ String.drop 1 s
             pure s
+
+-- |Matches one of a list of strings.
+oneOf :: forall f. (Functor f, Foldable f) => f String -> Parser Char String
+oneOf = foldl (\p s -> p <|> string s) fail
 
 -- |Matches zero or more whitespace characters.
 spaces :: Parser Char String
