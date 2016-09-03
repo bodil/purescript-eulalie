@@ -1,6 +1,6 @@
 {
   "name": "purescript-eulalie",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Fast string parser combinators",
   "author": "Bodil Stokke",
   "license": "LGPL-3.0+",
