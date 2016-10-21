@@ -4,6 +4,7 @@ import Prelude
 import Data.Char as Char
 import Data.String as Str
 import Data.String.Regex as Re
+import Data.String.Regex.Flags as ReF
 import Data.Either (fromRight)
 import Partial.Unsafe (unsafePartial)
 
@@ -11,16 +12,16 @@ notP :: forall a. (a -> Boolean) -> (a -> Boolean)
 notP f = \v -> not (f v)
 
 digitRe :: Re.Regex
-digitRe = unsafePartial $ fromRight $ Re.regex "^\\d$" Re.noFlags
+digitRe = unsafePartial $ fromRight $ Re.regex "^\\d$" ReF.noFlags
 
 spaceRe :: Re.Regex
-spaceRe = unsafePartial $ fromRight $ Re.regex "^\\s$" Re.noFlags
+spaceRe = unsafePartial $ fromRight $ Re.regex "^\\s$" ReF.noFlags
 
 alphanumRe :: Re.Regex
-alphanumRe = unsafePartial $ fromRight $ Re.regex "^\\w$" Re.noFlags
+alphanumRe = unsafePartial $ fromRight $ Re.regex "^\\w$" ReF.noFlags
 
 letterRe :: Re.Regex
-letterRe = unsafePartial $ fromRight $ Re.regex "^\\w$" Re.noFlags
+letterRe = unsafePartial $ fromRight $ Re.regex "^\\w$" ReF.noFlags
 
 isDigit :: Char -> Boolean
 isDigit c = Re.test digitRe (Str.singleton c)

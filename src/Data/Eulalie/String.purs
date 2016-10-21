@@ -5,7 +5,6 @@ import Data.Eulalie.Char as Char
 import Data.Int as Int
 import Data.String as String
 import Control.Alt ((<|>))
-import Control.Apply ((*>))
 import Data.Eulalie.Parser (Parser, expected, maybe, fail, item)
 import Data.Foldable (class Foldable, fold, foldl)
 import Data.Maybe (Maybe(..))
