@@ -7,7 +7,6 @@ import Data.Eulalie.Stream as Stream
 import Data.Set as Set
 import Control.Alt (class Alt, (<|>))
 import Control.Alternative (class Alternative)
-import Control.Apply ((*>))
 import Control.MonadPlus (class MonadPlus)
 import Control.MonadZero (class MonadZero)
 import Control.Plus (class Plus)
