@@ -39,11 +39,11 @@ notChar = fromChar <<< Char.notChar
 string :: String -> Parser Char String
 string s = expected (string' s) $ "\"" <> s <> "\""
   where string' :: String -> Parser Char String
-        string' s = case String.charAt 0 s of
+        string' s' = case String.charAt 0 s' of
           Nothing -> pure ""
           Just c -> do
             Char.char c
-            string' $ String.drop 1 s
+            string' $ String.drop 1 s'
             pure s
 
 -- |Matches one of a list of strings.
