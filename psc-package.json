@@ -1,0 +1,17 @@
+{
+    "name": "purescript-eulalie",
+    "set": "psc-0.10.4",
+    "source": "https://github.com/purescript/package-sets.git",
+    "depends": [
+        "globals",
+        "integers",
+        "foldable-traversable",
+        "monoid",
+        "tuples",
+        "control",
+        "sets",
+        "maybe",
+        "strings",
+        "prelude"
+    ]
+}
