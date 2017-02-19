@@ -150,7 +150,7 @@ import Data.Eulalie.String as S
 myParser = P.seq (S.string "hi") \_ ->
   P.seq S.spaces1 \_ ->
     P.seq S.notSpaces1 \name ->
-      P.seq S.string "!" \_ ->
+      P.seq (S.string "!") \_ ->
         P.succeed name
 
 -- with do notation:
@@ -177,7 +177,7 @@ import Data.Eulalie.String as S
 
 -- using `either`:
 myParser = P.either (S.string "lol")
-  (P.either (S.string "rofl" S.String "lmao"))
+  (P.either (S.string "rofl") (S.string "lmao"))
 
 -- using <|>:
 myParser = S.string "lol" <|> S.string "rofl" <|> S.string "lmao"
