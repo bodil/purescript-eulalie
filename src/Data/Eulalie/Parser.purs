@@ -7,6 +7,7 @@ import Data.Eulalie.Stream as Stream
 import Data.Set as Set
 import Control.Alt (class Alt, (<|>))
 import Control.Alternative (class Alternative)
+import Control.Lazy (class Lazy)
 import Control.MonadPlus (class MonadPlus)
 import Control.MonadZero (class MonadZero)
 import Control.Plus (class Plus)
@@ -209,3 +210,6 @@ instance semigroupParser :: (Monoid o) => Semigroup (Parser i o) where
 
 instance monoidParser :: (Monoid o) => Monoid (Parser i o) where
   mempty = pure mempty
+
+instance lazyParser :: Lazy (Parser i o) where
+  defer f = Parser \i → parse (f unit) i
