@@ -15,18 +15,18 @@
     "url": "git://github.com/bodil/purescript-eulalie.git"
   },
   "dependencies": {
-    "purescript-strings": "~2.1.0",
-    "purescript-maybe": "~2.1.1",
-    "purescript-sets": "~2.0.0",
-    "purescript-control": "~2.0.0",
-    "purescript-tuples": "~3.2.0",
-    "purescript-monoid": "~2.2.0",
-    "purescript-foldable-traversable": "~2.2.0",
-    "purescript-integers": "~2.1.0",
-    "purescript-globals": "~2.0.0"
+    "purescript-strings": "~3.0.0",
+    "purescript-maybe": "~3.0.0",
+    "purescript-sets": "~3.0.0",
+    "purescript-control": "~3.0.0",
+    "purescript-tuples": "~4.0.0",
+    "purescript-monoid": "~3.0.0",
+    "purescript-foldable-traversable": "~3.0.0",
+    "purescript-integers": "~3.0.0",
+    "purescript-globals": "~3.0.0"
   },
   "devDependencies": {
-    "purescript-test-unit": "~10.1.0",
-    "purescript-quickcheck": "~3.1.1"
+    "purescript-test-unit": "~11.0.0",
+    "purescript-quickcheck": "~4.0.0"
   }
 }

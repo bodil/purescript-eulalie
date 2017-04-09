@@ -42,12 +42,12 @@ string s = expected (string' s) $ "\"" <> s <> "\""
         string' s' = case String.charAt 0 s' of
           Nothing -> pure ""
           Just c -> do
-            Char.char c
-            string' $ String.drop 1 s'
+            _ <- Char.char c
+            _ <- string' $ String.drop 1 s'
             pure s
 
 -- |Matches one of a list of strings.
-oneOf :: forall f. (Functor f, Foldable f) => f String -> Parser Char String
+oneOf :: forall f. Functor f => Foldable f => f String -> Parser Char String
 oneOf = foldl (\p s -> p <|> string s) fail
 
 -- |Matches zero or more whitespace characters.
@@ -94,7 +94,7 @@ float = expected float' "a number"
 quotedString :: Parser Char String
 quotedString = expected qs "a quoted string"
   where qs = do
-          char '"'
+          _ <- char '"'
           s <- many $ (char '\\' *> fromChar item) <|> notChar '"'
-          char '"'
+          _ <- char '"'
           pure s
